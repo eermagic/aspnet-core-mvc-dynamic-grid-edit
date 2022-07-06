@@ -1,0 +1,117 @@
+﻿<div id="app">
+    <div class="card">
+        <div class="card-header">
+            動態列表及修改教學
+        </div>
+        <div class="card-body">
+            <button type="button" class="btn btn-primary" v-on:click="Query()">載入資料</button> &nbsp;
+            <button type="button" class="btn btn-primary" v-on:click="UpdateToDb()">更新至資料庫</button>
+        </div>
+        <div class="card-body">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th style="width: 30px;text-align:center;"></th>
+                        <th>姓名</th>
+                        <th>項目</th>
+                        <th>數量</th>
+                        <th>金額</th>
+                        <th>日期</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="(item, index) in grid.list">
+                        <td><a v-on:click="DeleteRow(index)" style="cursor: pointer;">刪</a></td>
+                        <td><input type="text" v-bind:id="'Grid_Name_' + index" v-model="grid.list[index].name" /></td>
+                        <td><input type="text" v-bind:id="'Grid_Item_' + index" v-model="grid.list[index].item" /></td>
+                        <td><input type="text" v-bind:id="'Grid_Qty_' + index" v-model="grid.list[index].qty" /></td>
+                        <td><input type="text" v-bind:id="'Grid_Amount_' + index" v-model="grid.list[index].amount" /></td>
+                        <td><input type="text" v-bind:id="'Grid_Date_' + index" v-model="grid.list[index].date" /></td>
+                    </tr>
+                </tbody>
+            </table>
+            <button type="button" class="btn btn-primary" v-on:click="AddRow()">加入一筆</button>
+        </div>
+    </div>
+
+</div>
+@section scripts {
+<script>
+    const app = Vue.createApp({
+        data() {
+            return {
+                grid:{
+                    list:[]
+                }
+            }
+        }
+        , methods: {
+            //載入資料
+            Query() {
+                var self = this;
+
+                // 組合表單資料
+                var postData = {};
+
+                // 使用 jQuery Ajax 傳送至後端
+                $.ajax({
+                    url:'@Url.Content("~/Home/Query")',
+                    method:'POST',
+                    dataType:'json',
+                    data: { inModel: postData },
+                    success: function (datas) {
+                        // 綁定列表
+                        self.grid.list = datas.grids;
+                    },
+                    error: function (err) {
+                        alert(err.status + " " + err.statusText + '\n' + err.responseText);
+                    }
+                });
+            }
+            // 新增資料
+            , AddRow(){
+	            var self = this;
+	            var addObj = {
+		            pK:''
+		            , name: ''
+		            , item: ''
+		            , qty: ''
+		            , amount: ''
+		            , date:''
+	            }
+	            self.grid.list.push(addObj);
+            }
+            // 刪除資料
+            , DeleteRow(index){
+                var self = this;
+                if (confirm("是否確定刪除資料？")) {
+                    self.grid.list.splice(index, 1); 
+                }
+            }
+            // 更新至資料庫
+            , UpdateToDb(){
+                var self = this;
+
+                // 組合表單資料
+                var postData = {};
+                postData['grids'] = self.grid.list;
+
+                // 使用 jQuery Ajax 傳送至後端
+                $.ajax({
+                    url:'@Url.Content("~/Home/UpdateToDb")',
+                    method:'POST',
+                    dataType:'json',
+                    data: { inModel: postData , __RequestVerificationToken: $('@Html.AntiForgeryToken()').val()},
+                    success: function (datas) {
+                        alert(datas.msg);
+                    },
+                    error: function (err) {
+                        alert(err.status + " " + err.statusText + '\n' + err.responseText);
+                    }
+                });
+            }
+        }
+    });
+    const vm = app.mount('#app');
+</script>
+}
